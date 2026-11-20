@@ -16,6 +16,7 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    # Главное меню (внизу экрана)
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn_cfg = telebot.types.KeyboardButton("📁 Получить CFG")
     btn_probit = telebot.types.KeyboardButton("🔍 Пробив")
@@ -28,39 +29,47 @@ def start(message):
     )
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
-# --- МЕНЮ ВЫБОРА КФГ ---
+# --- МЕНЮ ВЫБОРА КФГ (ТЕПЕРЬ ВНИЗУ) ---
 @bot.message_handler(func=lambda message: message.text == "📁 Получить CFG")
 def cfg_menu(message):
-    markup = telebot.types.InlineKeyboardMarkup()
-    btn_legit = telebot.types.InlineKeyboardButton("🥷 Legit CFG", callback_data="get_legit")
-    btn_rage = telebot.types.InlineKeyboardButton("🔥 Rage CFG", callback_data="get_rage")
+    # Меняем клавиатуру на выбор Legit или Rage
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    btn_legit = telebot.types.KeyboardButton("Legit")
+    btn_rage = telebot.types.KeyboardButton("Rage")
+    btn_back = telebot.types.KeyboardButton("Назад")
     markup.add(btn_legit, btn_rage)
+    markup.add(btn_back)
     
-    bot.send_message(message.chat.id, "Выбери нужный конфиг:", reply_markup=markup)
+    bot.send_message(message.chat.id, "Выбери конфиг (Legit или Rage):", reply_markup=markup)
 
-# --- ОТПРАВКА ФАЙЛА С ИНСТРУКЦИЕЙ ---
-@bot.callback_query_handler(func=lambda call: call.data.startswith('get_'))
-def send_file(call):
-    # Текст инструкции, который будет под файлом
+# --- ОТПРАВКА ФАЙЛА ---
+@bot.message_handler(func=lambda message: message.text in ["Legit", "Rage"])
+def send_file(message):
     instruction = "⚠️ **Внимание!**\nПеред установкой кфг обязательно переименуйте файл из **.txt** на **.cfg**"
     
-    if call.data == "get_legit":
+    if message.text == "Legit":
         filename = "legit.txt" 
         caption = f"Твой Legit CFG.\n\n{instruction}"
-    elif call.data == "get_rage":
+    elif message.text == "Rage":
         filename = "rage.txt" 
         caption = f"Твой Rage CFG.\n\n{instruction}"
-    else:
-        return
-
+    
     try:
         with open(filename, 'rb') as f:
-            # Отправляем файл с текстом инструкции
-            bot.send_document(call.message.chat.id, f, caption=caption, parse_mode='Markdown')
-            bot.answer_callback_query(call.id, "Файл отправлен!")
+            bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
+            
+            # Возвращаем главное меню после отправки
+            markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add(telebot.types.KeyboardButton("📁 Получить CFG"), telebot.types.KeyboardButton("🔍 Пробив"))
+            bot.send_message(message.chat.id, "Что-то еще?", reply_markup=markup)
+            
     except Exception as e:
-        bot.answer_callback_query(call.id, "Ошибка: файл не найден.")
-        bot.send_message(call.message.chat.id, f"⚠️ Ошибка: убедись, что файл {filename} загружен на GitHub и назван верно.")
+        bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename} не найден на сервере.")
+
+# --- КНОПКА НАЗАД ---
+@bot.message_handler(func=lambda message: message.text == "Назад")
+def back_to_main(message):
+    start(message)
 
 # --- ПРОБИВ ---
 @bot.message_handler(func=lambda message: message.text == "🔍 Пробив")
@@ -71,7 +80,8 @@ def ask_phone(message):
 def lookup(message):
     text = message.text.strip()
     
-    if text in ["📁 Получить CFG", "🔍 Пробив"]:
+    # Игнорируем системные кнопки
+    if text in ["📁 Получить CFG", "🔍 Пробив", "Legit", "Rage", "Назад"]:
         return
 
     # Юзернейм
