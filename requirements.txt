@@ -1,3 +1,5 @@
 pyTelegramBotAPI
 phonenumbers
 flask
+requests
+beautifulsoup4
