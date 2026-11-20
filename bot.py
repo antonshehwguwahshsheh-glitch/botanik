@@ -3,8 +3,6 @@ import phonenumbers
 from phonenumbers import carrier, geocoder
 from flask import Flask
 from threading import Thread
-import requests
-import re
 
 app = Flask('')
 @app.route('/')
@@ -12,69 +10,84 @@ def home(): return "Бот жив!"
 def run(): app.run(host='0.0.0.0', port=8080)
 def keep_alive(): Thread(target=run).start()
 
-# Твой новый токен
+# Твой токен
 TOKEN = '9158579329:AAFeT1iNKmaVXcuW63BoaMfJK5CZ8C0Wsr4'
 bot = telebot.TeleBot(TOKEN)
 
-# Расширенный поиск имен в Google
-def search_google(query):
-    names = []
-    try:
-        url = f"https://www.google.com/search?q=%22{query}%22"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        r = requests.get(url, headers=headers, timeout=7)
-        
-        # Ищем ФИО, имена, ники (кириллица и латиница)
-        found = re.findall(r'[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2}', r.text)
-        found += re.findall(r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}', r.text)
-        
-        # Фильтруем мусор
-        for name in found:
-            if name not in names and len(name) > 3 and "Google" not in name and "Search" not in name:
-                names.append(name)
-    except:
-        pass
-    return names[:3]
-
 @bot.message_handler(commands=['start'])
 def start(message):
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn_cfg = telebot.types.KeyboardButton("📁 Получить CFG")
+    btn_probit = telebot.types.KeyboardButton("🔍 Пробив")
+    markup.add(btn_cfg, btn_probit)
+    
     text = (
-        "Привет это создатель тгк micro_soft_orig\n"
-        "Для вас я создал бота для пробивки.\n"
-        "Вставь номер телефона или юзер нейм."
+        "Привет! Это создатель тгк micro_soft_orig.\n"
+        "Я выдаю CFG для Zenin и пробиваю номера.\n"
+        "Выбирай действие на клавиатуре:"
     )
-    bot.send_message(message.chat.id, text)
+    bot.send_message(message.chat.id, text, reply_markup=markup)
+
+# --- МЕНЮ ВЫБОРА КФГ ---
+@bot.message_handler(func=lambda message: message.text == "📁 Получить CFG")
+def cfg_menu(message):
+    markup = telebot.types.InlineKeyboardMarkup()
+    # Кнопки для выбора кфг
+    btn_legit = telebot.types.InlineKeyboardButton("🥷 Free Legit CFG", callback_data="get_legit")
+    btn_rage = telebot.types.InlineKeyboardButton("🔥 Rage CFG", callback_data="get_rage")
+    markup.add(btn_legit, btn_rage)
+    
+    bot.send_message(message.chat.id, "Выбери нужный конфиг:", reply_markup=markup)
+
+# --- ОТПРАВКА ВЫБРАННОГО ФАЙЛА ---
+@bot.callback_query_handler(func=lambda call: call.data.startswith('get_'))
+def send_file(call):
+    if call.data == "get_legit":
+        filename = "free_legit.txt" # Имя файла на GitHub
+        caption = "Твой Free Legit CFG. Приятной игры!"
+    elif call.data == "get_rage":
+        filename = "rage.txt" # Имя файла на GitHub
+        caption = "Твой Rage CFG. Будь осторожен!"
+    else:
+        return
+
+    try:
+        with open(filename, 'rb') as f:
+            bot.send_document(call.message.chat.id, f, caption=caption)
+            bot.answer_callback_query(call.id, "Файл отправлен!")
+    except Exception as e:
+        bot.answer_callback_query(call.id, "Ошибка: файл не найден.")
+        bot.send_message(call.message.chat.id, f"⚠️ Ошибка: убедись, что файл {filename} загружен на GitHub.")
+
+# --- ПРОБИВ ---
+@bot.message_handler(func=lambda message: message.text == "🔍 Пробив")
+def ask_phone(message):
+    bot.send_message(message.chat.id, "Отправь мне номер телефона (например, +7999...) или @username.")
 
 @bot.message_handler(func=lambda message: True)
 def lookup(message):
     text = message.text.strip()
     
-    # --- ЕСЛИ ВВЕЛИ ЮЗЕРНЕЙМ ---
+    # Игнорируем нажатия кнопок
+    if text in ["📁 Получить CFG", "🔍 Пробив"]:
+        return
+
+    # Юзернейм
     if text.startswith('@'):
         username = text.replace('@', '')
-        found_names = search_google(username)
-        
-        result = f"👤 **Поиск по юзернейму:** {text}\n"
-        if found_names:
-            result += f"📝 **Найденные имена:** {', '.join(found_names)}\n\n"
-        else:
-            result += "📝 **Имена:** Не найдено в открытом доступе.\n\n"
-            
+        result = f"👤 **Поиск по юзернейму:** {text}\n\n"
         result += f"🔗 **Ссылки:**\n"
         result += f"• [Telegram](https://t.me/{username})\n"
         result += f"• [VK](https://vk.com/{username})\n"
         result += f"• [Instagram](https://instagram.com/{username})\n"
-        result += f"• [GitHub](https://github.com/{username})\n"
-        result += f"• [TikTok](https://tiktok.com/@{username})\n"
-        
         bot.reply_to(message, result, parse_mode='Markdown', disable_web_page_preview=True)
         return
 
-    # --- ЕСЛИ ВВЕЛИ НОМЕР ---
+    # Номер
     try:
         num = phonenumbers.parse(text, "RU")
         if not phonenumbers.is_valid_number(num):
-            bot.reply_to(message, "❌ Невалидный номер или юзернейм.")
+            bot.reply_to(message, "❌ Невалидный номер.")
             return
             
         operator = carrier.name_for_number(num, "ru") or "Неизвестно"
@@ -82,32 +95,21 @@ def lookup(message):
         clean = text.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
         if clean.startswith("8"): clean = "7" + clean[1:]
 
-        found_names = search_google(text)
-        
-        result = f"📱 {text} | {operator} | {region}\n"
-        
-        if found_names:
-            result += f"👤 **Найденные имена (Google):**\n"
-            for name in found_names:
-                result += f"• {name}\n"
-        else:
-            result += f"👤 **Имена:** В открытых источниках не найдено.\n"
-            
-        # Добавляем "плюшки" (много ссылок)
+        result = f"📱 **Номер:** {text}\n"
+        result += f"🏢 **Оператор:** {operator}\n"
+        result += f"🌍 **Регион:** {region}\n\n"
         result += (
-            f"\n🔗 **Ссылки для проверки:**\n"
-            f"[TG](https://t.me/+{clean}) | [WA](https://wa.me/{clean}) | "
-            f"[VK](https://vk.com/search?c%5Bq%5D={clean}) | "
-            f"[Авито](https://www.avito.ru/all?q={clean}) | "
-            f"[Юла](https://youla.ru/search?q={clean}) | "
-            f"[Google](https://www.google.com/search?q=%22{clean}%22)\n\n"
-            f"💡 *Совет: если имя не найдено, попробуй поискать по ссылкам выше, там часто есть имена.*"
+            f"🔗 **Ссылки для проверки:**\n"
+            f"• [Telegram](https://t.me/+{clean})\n"
+            f"• [WhatsApp](https://wa.me/{clean})\n"
+            f"• [VK](https://vk.com/search?c%5Bq%5D={clean})\n"
+            f"• [Авито](https://www.avito.ru/all?q={clean})\n"
+            f"• [Google](https://www.google.com/search?q=%22{clean}%22)"
         )
-        
         bot.reply_to(message, result, parse_mode='Markdown', disable_web_page_preview=True)
         
     except Exception as e:
-        bot.reply_to(message, "⚠️ Ошибка. Введи номер в формате +7... или @username.")
+        bot.reply_to(message, "⚠️ Введи номер в формате +7... или @username.")
 
 if __name__ == "__main__":
     keep_alive()
