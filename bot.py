@@ -14,6 +14,7 @@ def home(): return "Бот жив!"
 def run(): app.run(host='0.0.0.0', port=8080)
 def keep_alive(): Thread(target=run).start()
 
+# ВСТАВЬ СЮДА ТОКЕН СТАРОГО БОТА (который работает)
 TOKEN = '9158579329:AAFeT1iNKmaVXcuW63BoaMfJK5CZ8C0Wsr4'
 bot = telebot.TeleBot(TOKEN)
 
@@ -45,7 +46,6 @@ def send_root_files(message):
         "Перед установкой обязательно переименуйте скачанный файл из **.txt** обратно в **.apk**!"
     )
     
-    # ОТПРАВЛЯЕМ ПЕРВЫЙ ФАЙЛ (KernelSU)
     try:
         filename1 = "KernelSU_v3.3.1_32680-release.txt" 
         with open(filename1, 'rb') as f:
@@ -53,7 +53,6 @@ def send_root_files(message):
     except:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename1} не найден.")
 
-    # ОТПРАВЛЯЕМ ВТОРОЙ ФАЙЛ (dirtyfrag)
     try:
         filename2 = "dirtyfrag.txt"
         with open(filename2, 'rb') as f:
@@ -146,7 +145,6 @@ def handle_text(message):
     if text in ["📁 CFG", "🔍 Пробив", "🎮 Поиск в играх", "🎲 Рандом", "🌐 IP Инфо", "🔑 Пароль", "🛡️ Проверка пароля", "📖 Инструкция", "📹 Скачать видео", "🛡️ CVE Поиск", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "💎 Донат", "Legit", "Rage", "Назад"]:
         return
 
-    # Рандом
     if text.replace(" ", "").isdigit() and " " in text:
         try:
             a, b = map(int, text.split())
@@ -155,7 +153,6 @@ def handle_text(message):
             return
         except: pass
 
-    # Пароль
     if message.reply_to_message and "пароль" in message.reply_to_message.text.lower():
         sha1 = hashlib.sha1(text.encode()).hexdigest().upper()
         try:
@@ -167,12 +164,10 @@ def handle_text(message):
         except: bot.reply_to(message, "⚠️ Ошибка.")
         return
 
-    # Видео
     if "tiktok.com" in text or "youtube.com" in text or "youtu.be" in text:
         bot.reply_to(message, "⚠️ Скачивание на бесплатном сервере может не работать.")
         return
 
-    # CVE
     if len(text) > 3 and not text.startswith('@') and not text.startswith('+') and not message.reply_to_message:
         try:
             url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={text}&resultsPerPage=2"
@@ -187,20 +182,17 @@ def handle_text(message):
                 return
         except: pass
 
-    # Игроки
     if len(text) < 20 and not text.startswith('@') and not text.startswith('+'):
         res = f"🎮 **Игрок:** {text}\n• [Standoff 2](https://standoff2.com/)\n• [PUBG Mobile](https://www.pubg.com/)"
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
         return
 
-    # Юзернейм
     if text.startswith('@'):
         username = text.replace('@', '')
         res = f"👤 **Юзернейм:** {text}\n🔗 [TG](https://t.me/{username}) | [VK](https://vk.com/{username})"
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
         return
 
-    # IP
     if text.count('.') == 3 and not text.startswith('+') and not text.startswith('7'):
         try:
             r = requests.get(f"http://ip-api.com/json/{text}?lang=ru", timeout=5).json()
@@ -210,7 +202,6 @@ def handle_text(message):
         except: bot.reply_to(message, "⚠️ Ошибка.")
         return
 
-    # Номер
     try:
         num = phonenumbers.parse(text, "RU")
         if not phonenumbers.is_valid_number(num):
@@ -228,6 +219,7 @@ def handle_text(message):
 if __name__ == "__main__":
     keep_alive()
     print("Бот запущен...")
+    bot.polling()rint("Бот запущен...")
     bot.polling()ли @username.")
 
 if __name__ == "__main__":
