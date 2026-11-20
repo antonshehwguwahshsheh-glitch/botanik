@@ -14,6 +14,7 @@ def home(): return "Бот жив!"
 def run(): app.run(host='0.0.0.0', port=8080)
 def keep_alive(): Thread(target=run).start()
 
+# Твой токен
 TOKEN = '9158579329:AAFeT1iNKmaVXcuW63BoaMfJK5CZ8C0Wsr4'
 bot = telebot.TeleBot(TOKEN)
 
@@ -25,7 +26,7 @@ def start(message):
         "🔥 **Что мы добавили за всё время:**\n"
         "• Рабочие CFG для Standoff 2 (Legit / Rage)\n"
         "• Скрипты для Temp Root (KernelSU + DirtyFrag)\n"
-        "• Пробив по номеру (оператор, регион, соцсети)\n"
+        "• Пробив по номеру и юзернейму\n"
         "• Генератор паролей и IP-инфо\n\n"
         "📢 **Подписывайся на наш канал**, чтобы первым получать новые читы, кфг и софт:\n"
         "👉 [t.me/Micro_soft_orig](https://t.me/Micro_soft_orig)\n"
@@ -34,7 +35,6 @@ def start(message):
     )
     
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # Убрал "ПД" из меню
     buttons = [
         "📁 CFG", "🔍 Пробив",
         "🎲 Рандом", "🌐 IP", "🔑 Генератор",
@@ -49,6 +49,16 @@ def start(message):
             markup.add(buttons[i])
     
     bot.send_message(message.chat.id, channel_text, reply_markup=markup, parse_mode='Markdown', disable_web_page_preview=True)
+
+# --- КНОПКА ПРОБИВ (СООБЩЕНИЕ-ПОДСКАЗКА) ---
+@bot.message_handler(func=lambda message: message.text == "🔍 Пробив")
+def ask_phone(message):
+    text = (
+        "📱 **Отправь номер телефона** (например: `+79991234567`)\n"
+        "**или @юзернейм** (например: `@tg_micro_soft`).\n\n"
+        "Я пробью его по базам и соцсетям."
+    )
+    bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 # --- ИНСТРУКЦИЯ С ВИДЕО-ССЫЛКАМИ ---
 @bot.message_handler(func=lambda message: message.text == "📖 Инструкция")
@@ -75,7 +85,6 @@ def cfg_menu(message):
         "— **Rage** (агрессивный)"
     )
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    # Убрал "ПД"
     markup.add("Legit", "Rage", "Назад")
     bot.send_message(message.chat.id, history_text, reply_markup=markup, parse_mode='Markdown')
 
@@ -207,7 +216,6 @@ def handle_text(message):
         except: bot.reply_to(message, "⚠️ Ошибка.")
         return
 
-    # Пробив номера (добавил проверку)
     try:
         num = phonenumbers.parse(text, "RU")
         if not phonenumbers.is_valid_number(num):
@@ -220,7 +228,7 @@ def handle_text(message):
         res = f"📱 **{text}** | {operator} | {region}\n🔗 [TG](https://t.me/+{clean}) | [WA](https://wa.me/{clean}) | [VK](https://vk.com/search?c%5Bq%5D={clean})"
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
     except:
-        bot.reply_to(message, "⚠️ Введи номер в формате +79991234567, IP или @username.")
+        bot.reply_to(message, "⚠️ Введи номер (+7...), IP или @username.")
 
 if __name__ == "__main__":
     keep_alive()
