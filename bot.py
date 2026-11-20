@@ -20,12 +20,24 @@ bot = telebot.TeleBot(TOKEN)
 # --- ГЛАВНОЕ МЕНЮ ---
 @bot.message_handler(commands=['start'])
 def start(message):
+    channel_text = (
+        "👋 **Привет! Это бот канала micro_soft_orig.**\n\n"
+        "🔥 **Что мы добавили за всё время:**\n"
+        "• Рабочие CFG для Standoff 2 (Legit / Rage / ПД)\n"
+        "• Скрипты для Temp Root (KernelSU + DirtyFrag)\n"
+        "• Пробив по номеру (оператор, регион, соцсети)\n"
+        "• Генератор паролей и IP-инфо\n\n"
+        "📢 **Подписывайся на наш канал**, чтобы первым получать новые читы, кфг и софт:\n"
+        "👉 [t.me/Micro_soft_orig](https://t.me/Micro_soft_orig)\n"
+        "▶️ [YouTube канал](https://www.youtube.com/@nirok25f)\n\n"
+        "👇 Выбирай действие на клавиатуре ниже:"
+    )
+    
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # Кнопку "Донат" убрал
     buttons = [
-        "📁 CFG", "🔍 Пробив", "🎮 Игры",
+        "📁 CFG", "🔍 Пробив",
         "🎲 Рандом", "🌐 IP", "🔑 Генератор",
-        "🛡️ Утечки", "📖 Инструкция", "📹 Видео",
+        "📖 Инструкция", "📹 Видео",
         "🛡️ CVE", "🔓 Temp Root", "📢 Канал", 
         "🆘 Поддержка"
     ]
@@ -35,8 +47,56 @@ def start(message):
         else:
             markup.add(buttons[i])
     
-    text = "Привет! Это создатель тгк micro_soft_orig.\nВыбирай действие на клавиатуре:"
-    bot.send_message(message.chat.id, text, reply_markup=markup)
+    bot.send_message(message.chat.id, channel_text, reply_markup=markup, parse_mode='Markdown', disable_web_page_preview=True)
+
+# --- ИНСТРУКЦИЯ С ВИДЕО-ССЫЛКАМИ ---
+@bot.message_handler(func=lambda message: message.text == "📖 Инструкция")
+def instruction_menu(message):
+    markup = telebot.types.InlineKeyboardMarkup()
+    
+    # Вставил твои ссылки
+    link_cfg1 = "https://vt.tiktok.com/ZSpKXLwc1/"
+    link_cfg2 = "https://vt.tiktok.com/ZSpKX6qcR/"
+    link_root = "https://vt.tiktok.com/ZSpKXxHpu/"
+    
+    markup.add(telebot.types.InlineKeyboardButton("📄 Видео: Установка CFG (1)", url=link_cfg1))
+    markup.add(telebot.types.InlineKeyboardButton("📄 Видео: Установка CFG (2)", url=link_cfg2))
+    markup.add(telebot.types.InlineKeyboardButton("🔓 Видео: Установка Temp Root", url=link_root))
+    
+    bot.send_message(message.chat.id, "📖 **Выбери видео-инструкцию:**", reply_markup=markup, parse_mode='Markdown')
+
+# --- CFG ---
+@bot.message_handler(func=lambda message: message.text == "📁 CFG")
+def cfg_menu(message):
+    history_text = (
+        "📁 **Конфиги (CFG)**\n\n"
+        "Выбери нужный конфиг ниже:\n"
+        "— **Legit** (легитный)\n"
+        "— **Rage** (агрессивный)\n"
+        "— **ПД** (специально для PUBG/Standoff)"
+    )
+    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("Legit", "Rage", "ПД", "Назад")
+    bot.send_message(message.chat.id, history_text, reply_markup=markup, parse_mode='Markdown')
+
+@bot.message_handler(func=lambda message: message.text in ["Legit", "Rage", "ПД"])
+def send_file(message):
+    instruction = "⚠️ Переименуйте файл из .txt на .cfg"
+    if message.text == "Legit":
+        filename = "legit.txt" 
+        caption = f"Твой Legit CFG.\n\n{instruction}"
+    elif message.text == "Rage":
+        filename = "rage.txt" 
+        caption = f"Твой Rage CFG.\n\n{instruction}"
+    elif message.text == "ПД":
+        filename = "pd.txt" 
+        caption = f"Твой CFG для ПД.\n\n{instruction}"
+    try:
+        with open(filename, 'rb') as f:
+            bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
+            start(message)
+    except Exception:
+        bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename} не найден на GitHub.")
 
 # --- TEMP ROOT ---
 @bot.message_handler(func=lambda message: message.text == "🔓 Temp Root")
@@ -59,59 +119,15 @@ def send_root_files(message):
     except:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename2} не найден.")
 
-# --- CFG ---
-@bot.message_handler(func=lambda message: message.text == "📁 CFG")
-def cfg_menu(message):
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add("Legit", "Rage", "Назад")
-    bot.send_message(message.chat.id, "Выбери конфиг:", reply_markup=markup)
-
-@bot.message_handler(func=lambda message: message.text in ["Legit", "Rage"])
-def send_file(message):
-    instruction = "⚠️ Переименуйте файл из .txt на .cfg"
-    if message.text == "Legit":
-        filename = "legit.txt" 
-        caption = f"Твой Legit CFG.\n\n{instruction}"
-    elif message.text == "Rage":
-        filename = "rage.txt" 
-        caption = f"Твой Rage CFG.\n\n{instruction}"
-    try:
-        with open(filename, 'rb') as f:
-            bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
-            start(message)
-    except Exception:
-        bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename} не найден.")
-
-# --- ИНСТРУКЦИЯ (Кнопка) ---
-@bot.message_handler(func=lambda message: message.text == "📖 Инструкция")
-def instruction_menu(message):
+# --- ВИДЕО (Общий профиль TikTok) ---
+@bot.message_handler(func=lambda message: message.text == "📹 Видео")
+def video_menu(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton("📄 Как установить CFG", callback_data="inst_cfg"))
-    markup.add(telebot.types.InlineKeyboardButton("🔓 Как ставить Temp Root", callback_data="inst_root"))
-    bot.send_message(message.chat.id, "Выбери инструкцию:", reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('inst_'))
-def show_instruction(call):
-    if call.data == "inst_cfg":
-        text = "📄 **Установка CFG:**\n1. Скачай файл.\n2. Переименуй .txt в .cfg.\n3. Закинь в папку с игрой.\n4. Запусти игру."
-    elif call.data == "inst_root":
-        text = "🔓 **Установка Temp Root:**\n1. Скачай оба файла.\n2. Переименуй .txt в .apk.\n3. Установи KernelSU.\n4. Запусти dirtyfrag."
-    bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
-    bot.answer_callback_query(call.id)
+    # Ссылка на профиль TikTok
+    markup.add(telebot.types.InlineKeyboardButton("📺 Мой TikTok", url="https://www.tiktok.com/@твой_ник"))
+    bot.send_message(message.chat.id, "🎬 **Смотри мои туториалы в TikTok:**", reply_markup=markup)
 
 # --- ОСТАЛЬНЫЕ КНОПКИ ---
-@bot.message_handler(func=lambda message: message.text == "🛡️ Утечки")
-def ask_pass(message):
-    bot.send_message(message.chat.id, "Отправь пароль (ответом на это сообщение), и я проверю, был ли он слит.")
-
-@bot.message_handler(func=lambda message: message.text == "🎮 Игры")
-def ask_nick(message):
-    bot.send_message(message.chat.id, "Отправь ник. Я дам ссылки на статистику.")
-
-@bot.message_handler(func=lambda message: message.text == "📹 Видео")
-def ask_video(message):
-    bot.send_message(message.chat.id, "Кинь ссылку на TikTok или YouTube.")
-
 @bot.message_handler(func=lambda message: message.text == "🎲 Рандом")
 def ask_random(message):
     bot.send_message(message.chat.id, "Напиши два числа через пробел (например: 1 100).")
@@ -150,7 +166,7 @@ def back(message):
 def handle_text(message):
     text = message.text.strip()
     
-    if text in ["📁 CFG", "🔍 Пробив", "🎮 Игры", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "🛡️ Утечки", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "Legit", "Rage", "Назад"]:
+    if text in ["📁 CFG", "🔍 Пробив", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "Legit", "Rage", "ПД", "Назад"]:
         return
 
     if text.replace(" ", "").isdigit() and " " in text:
@@ -160,17 +176,6 @@ def handle_text(message):
             bot.reply_to(message, f"🎲 Случайное число: **{random.randint(a, b)}**", parse_mode='Markdown')
             return
         except: pass
-
-    if message.reply_to_message and "пароль" in message.reply_to_message.text.lower():
-        sha1 = hashlib.sha1(text.encode()).hexdigest().upper()
-        try:
-            r = requests.get(f"https://api.pwnedpasswords.com/range/{sha1[:5]}", timeout=5)
-            if sha1[5:] in r.text:
-                bot.reply_to(message, "🚨 **Пароль найден в утечках!**")
-            else:
-                bot.reply_to(message, "✅ **Пароль чист.**")
-        except: bot.reply_to(message, "⚠️ Ошибка.")
-        return
 
     if "tiktok.com" in text or "youtube.com" in text or "youtu.be" in text:
         bot.reply_to(message, "⚠️ Скачивание на бесплатном сервере может не работать.")
@@ -189,11 +194,6 @@ def handle_text(message):
                 bot.reply_to(message, res, parse_mode='Markdown')
                 return
         except: pass
-
-    if len(text) < 20 and not text.startswith('@') and not text.startswith('+'):
-        res = f"🎮 **Игрок:** {text}\n• [Standoff 2](https://standoff2.com/)\n• [PUBG Mobile](https://www.pubg.com/)"
-        bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
-        return
 
     if text.startswith('@'):
         username = text.replace('@', '')
