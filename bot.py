@@ -3,69 +3,55 @@ import phonenumbers
 from phonenumbers import carrier, geocoder, timezone
 from flask import Flask
 from threading import Thread
+import requests
 
-# --- Веб-сервер для Render (чтобы бот не засыпал) ---
 app = Flask('')
-
 @app.route('/')
-def home():
-    return "Бот жив!"
+def home(): return "Бот жив!"
+def run(): app.run(host='0.0.0.0', port=8080)
+def keep_alive(): Thread(target=run).start()
 
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-# --- Твой токен ---
 TOKEN = '9089789177:AAGtEvRBco6EpE0MkGEVDhO1ZXECzhxkoyU'
 bot = telebot.TeleBot(TOKEN)
 
-# --- Функция генерации ссылок для поиска ---
-def get_search_links(phone):
-    # Очищаем номер от плюсов и пробелов для корректного поиска
-    clean_phone = phone.replace("+", "").replace(" ", "")
+def get_social_links(phone):
+    # Форматируем номер для разных соцсетей
+    clean = phone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    if clean.startswith("8"): clean = "7" + clean[1:]
+    
     return (
-        f"\n🔍 **Поиск в открытых источниках:**\n"
-        f"[Google](https://www.google.com/search?q=%2B{clean_phone}) | "
-        f"[Яндекс](https://yandex.ru/search/?text=%2B{clean_phone}) | "
-        f"[ВКонтакте](https://vk.com/search?c%5Bq%5D={clean_phone})"
+        f"🔗 **Проверка соцсетей:**\n"
+        f"• [Telegram](https://t.me/+{clean})\n"
+        f"• [WhatsApp](https://wa.me/{clean})\n"
+        f"• [VK (возможно)](https://vk.com/search?c%5Bq%5D={clean})\n"
+        f"• [OK (возможно)](https://ok.ru/search?st.query={clean})\n\n"
+        f"🕵️ **Поиск в базах (Google):**\n"
+        f"[Искать ФИО и упоминания](https://www.google.com/search?q=%22{clean}%22+ФИО+Имя+Адрес)\n"
     )
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "Привет! Я твой OSINT-бот. Скинь номер телефона (например, +79161234567), и я пробью его по открытым данным.")
+    bot.send_message(message.chat.id, "Привет! Я OSINT-бот. Скинь номер телефона (например, +79161234567), и я проверю его по открытым источникам и соцсетям.")
 
 @bot.message_handler(func=lambda message: True)
 def lookup(message):
     text = message.text.strip()
     try:
-        # Парсим номер (по умолчанию Россия)
         num = phonenumbers.parse(text, "RU")
-        
-        # Проверяем валидность
         if not phonenumbers.is_valid_number(num):
-            bot.reply_to(message, "❌ Номер невалиден. Проверь цифры.")
+            bot.reply_to(message, "❌ Номер невалиден.")
             return
             
-        # Получаем данные об операторе и регионе
         operator = carrier.name_for_number(num, "ru")
         region = geocoder.description_for_number(num, "ru")
-        tz = timezone.time_zones_for_number(num)
         
-        # Формируем основной текст
+        # Формируем ответ
         result = f"📱 **Номер:** {text}\n"
         result += f"🏢 **Оператор:** {operator if operator else 'Неизвестно'}\n"
-        result += f"🌍 **Регион:** {region if region else 'Неизвестно'}\n"
-        result += f"⏰ **Пояс:** {', '.join(tz) if tz else 'Неизвестно'}\n"
+        result += f"🌍 **Регион:** {region if region else 'Неизвестно'}\n\n"
+        result += get_social_links(text)
         
-        # Добавляем ссылки на поиск
-        result += get_search_links(text)
-        
-        # Отправляем сообщение с поддержкой Markdown для ссылок
         bot.reply_to(message, result, parse_mode='Markdown', disable_web_page_preview=True)
-        
     except Exception as e:
         bot.reply_to(message, "⚠️ Ошибка. Введи номер в формате +7XXXXXXXXXX")
 
