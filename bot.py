@@ -21,12 +21,13 @@ bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # Кнопку "Донат" убрал
     buttons = [
         "📁 CFG", "🔍 Пробив", "🎮 Игры",
         "🎲 Рандом", "🌐 IP", "🔑 Генератор",
         "🛡️ Утечки", "📖 Инструкция", "📹 Видео",
         "🛡️ CVE", "🔓 Temp Root", "📢 Канал", 
-        "🆘 Поддержка", "💎 Донат"
+        "🆘 Поддержка"
     ]
     for i in range(0, len(buttons), 2):
         if i+1 < len(buttons):
@@ -58,7 +59,7 @@ def send_root_files(message):
     except:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename2} не найден.")
 
-# --- CFG (Вложенное меню) ---
+# --- CFG ---
 @bot.message_handler(func=lambda message: message.text == "📁 CFG")
 def cfg_menu(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -77,7 +78,7 @@ def send_file(message):
     try:
         with open(filename, 'rb') as f:
             bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
-            start(message) # Возвращаем главное меню
+            start(message)
     except Exception:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename} не найден.")
 
@@ -136,10 +137,6 @@ def links(message):
 def support(message):
     bot.send_message(message.chat.id, "Админ: @tg_micro_soft")
 
-@bot.message_handler(func=lambda message: message.text == "💎 Донат")
-def donate(message):
-    bot.send_message(message.chat.id, "Поддержать автора: https://www.donationalerts.com/r/твой_ник")
-
 @bot.message_handler(func=lambda message: message.text == "🛡️ CVE")
 def ask_cve(message):
     bot.send_message(message.chat.id, "Отправь название программы (например: Windows, Chrome), и я найду уязвимости.")
@@ -153,7 +150,7 @@ def back(message):
 def handle_text(message):
     text = message.text.strip()
     
-    if text in ["📁 CFG", "🔍 Пробив", "🎮 Игры", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "🛡️ Утечки", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "💎 Донат", "Legit", "Rage", "Назад"]:
+    if text in ["📁 CFG", "🔍 Пробив", "🎮 Игры", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "🛡️ Утечки", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "Legit", "Rage", "Назад"]:
         return
 
     if text.replace(" ", "").isdigit() and " " in text:
