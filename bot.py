@@ -37,10 +37,9 @@ def start(message):
     text = "Привет! Это создатель тгк micro_soft_orig.\nВыбирай действие на клавиатуре:"
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
-# --- TEMP ROOT (С ИНСТРУКЦИЕЙ) ---
+# --- TEMP ROOT ---
 @bot.message_handler(func=lambda message: message.text == "🔓 Temp Root")
 def send_root_files(message):
-    # Текст инструкции, который будет под файлами
     instruction = (
         "⚠️ **Внимание!**\n"
         "Перед установкой обязательно переименуйте скачанный файл из **.txt** обратно в **.apk**!"
@@ -225,6 +224,11 @@ def handle_text(message):
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
     except:
         bot.reply_to(message, "⚠️ Введи номер (+7...), IP или @username.")
+
+if __name__ == "__main__":
+    keep_alive()
+    print("Бот запущен...")
+    bot.polling()ли @username.")
 
 if __name__ == "__main__":
     keep_alive()
