@@ -23,7 +23,7 @@ def start(message):
     channel_text = (
         "👋 **Привет! Это бот канала micro_soft_orig.**\n\n"
         "🔥 **Что мы добавили за всё время:**\n"
-        "• Рабочие CFG для Standoff 2 (Legit / Rage / ПД)\n"
+        "• Рабочие CFG для Standoff 2 (Legit / Rage)\n"
         "• Скрипты для Temp Root (KernelSU + DirtyFrag)\n"
         "• Пробив по номеру (оператор, регион, соцсети)\n"
         "• Генератор паролей и IP-инфо\n\n"
@@ -34,6 +34,7 @@ def start(message):
     )
     
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # Убрал "ПД" из меню
     buttons = [
         "📁 CFG", "🔍 Пробив",
         "🎲 Рандом", "🌐 IP", "🔑 Генератор",
@@ -54,7 +55,6 @@ def start(message):
 def instruction_menu(message):
     markup = telebot.types.InlineKeyboardMarkup()
     
-    # Вставил твои ссылки
     link_cfg1 = "https://vt.tiktok.com/ZSpKXLwc1/"
     link_cfg2 = "https://vt.tiktok.com/ZSpKX6qcR/"
     link_root = "https://vt.tiktok.com/ZSpKXxHpu/"
@@ -72,14 +72,14 @@ def cfg_menu(message):
         "📁 **Конфиги (CFG)**\n\n"
         "Выбери нужный конфиг ниже:\n"
         "— **Legit** (легитный)\n"
-        "— **Rage** (агрессивный)\n"
-        "— **ПД** (специально для PUBG/Standoff)"
+        "— **Rage** (агрессивный)"
     )
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add("Legit", "Rage", "ПД", "Назад")
+    # Убрал "ПД"
+    markup.add("Legit", "Rage", "Назад")
     bot.send_message(message.chat.id, history_text, reply_markup=markup, parse_mode='Markdown')
 
-@bot.message_handler(func=lambda message: message.text in ["Legit", "Rage", "ПД"])
+@bot.message_handler(func=lambda message: message.text in ["Legit", "Rage"])
 def send_file(message):
     instruction = "⚠️ Переименуйте файл из .txt на .cfg"
     if message.text == "Legit":
@@ -88,9 +88,6 @@ def send_file(message):
     elif message.text == "Rage":
         filename = "rage.txt" 
         caption = f"Твой Rage CFG.\n\n{instruction}"
-    elif message.text == "ПД":
-        filename = "pd.txt" 
-        caption = f"Твой CFG для ПД.\n\n{instruction}"
     try:
         with open(filename, 'rb') as f:
             bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
@@ -123,7 +120,7 @@ def send_root_files(message):
 @bot.message_handler(func=lambda message: message.text == "📹 Видео")
 def video_menu(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    # Ссылка на профиль TikTok
+    # ЗАМЕНИ НА СВОЙ НИК В TIKTOK
     markup.add(telebot.types.InlineKeyboardButton("📺 Мой TikTok", url="https://www.tiktok.com/@твой_ник"))
     bot.send_message(message.chat.id, "🎬 **Смотри мои туториалы в TikTok:**", reply_markup=markup)
 
@@ -166,7 +163,7 @@ def back(message):
 def handle_text(message):
     text = message.text.strip()
     
-    if text in ["📁 CFG", "🔍 Пробив", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "Legit", "Rage", "ПД", "Назад"]:
+    if text in ["📁 CFG", "🔍 Пробив", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "Legit", "Rage", "Назад"]:
         return
 
     if text.replace(" ", "").isdigit() and " " in text:
@@ -210,10 +207,11 @@ def handle_text(message):
         except: bot.reply_to(message, "⚠️ Ошибка.")
         return
 
+    # Пробив номера (добавил проверку)
     try:
         num = phonenumbers.parse(text, "RU")
         if not phonenumbers.is_valid_number(num):
-            bot.reply_to(message, "❌ Невалидный номер.")
+            bot.reply_to(message, "❌ Невалидный номер. Введи в формате +79991234567")
             return
         operator = carrier.name_for_number(num, "ru") or "Неизвестно"
         region = geocoder.description_for_number(num, "ru") or "Неизвестно"
@@ -222,7 +220,7 @@ def handle_text(message):
         res = f"📱 **{text}** | {operator} | {region}\n🔗 [TG](https://t.me/+{clean}) | [WA](https://wa.me/{clean}) | [VK](https://vk.com/search?c%5Bq%5D={clean})"
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
     except:
-        bot.reply_to(message, "⚠️ Введи номер (+7...), IP или @username.")
+        bot.reply_to(message, "⚠️ Введи номер в формате +79991234567, IP или @username.")
 
 if __name__ == "__main__":
     keep_alive()
