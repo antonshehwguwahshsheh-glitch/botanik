@@ -14,7 +14,6 @@ def home(): return "Бот жив!"
 def run(): app.run(host='0.0.0.0', port=8080)
 def keep_alive(): Thread(target=run).start()
 
-# ВСТАВЬ СЮДА ТОКЕН СТАРОГО БОТА (который работает)
 TOKEN = '9158579329:AAFeT1iNKmaVXcuW63BoaMfJK5CZ8C0Wsr4'
 bot = telebot.TeleBot(TOKEN)
 
@@ -23,10 +22,10 @@ bot = telebot.TeleBot(TOKEN)
 def start(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [
-        "📁 CFG", "🔍 Пробив", "🎮 Поиск в играх",
-        "🎲 Рандом", "🌐 IP Инфо", "🔑 Пароль",
-        "🛡️ Проверка пароля", "📖 Инструкция", "📹 Скачать видео",
-        "🛡️ CVE Поиск", "🔓 Temp Root", "📢 Канал", 
+        "📁 CFG", "🔍 Пробив", "🎮 Игры",
+        "🎲 Рандом", "🌐 IP", "🔑 Генератор",
+        "🛡️ Утечки", "📖 Инструкция", "📹 Видео",
+        "🛡️ CVE", "🔓 Temp Root", "📢 Канал", 
         "🆘 Поддержка", "💎 Донат"
     ]
     for i in range(0, len(buttons), 2):
@@ -45,7 +44,6 @@ def send_root_files(message):
         "⚠️ **Внимание!**\n"
         "Перед установкой обязательно переименуйте скачанный файл из **.txt** обратно в **.apk**!"
     )
-    
     try:
         filename1 = "KernelSU_v3.3.1_32680-release.txt" 
         with open(filename1, 'rb') as f:
@@ -60,7 +58,7 @@ def send_root_files(message):
     except:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename2} не найден.")
 
-# --- CFG ---
+# --- CFG (Вложенное меню) ---
 @bot.message_handler(func=lambda message: message.text == "📁 CFG")
 def cfg_menu(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -79,24 +77,37 @@ def send_file(message):
     try:
         with open(filename, 'rb') as f:
             bot.send_document(message.chat.id, f, caption=caption, parse_mode='Markdown')
-            start(message)
+            start(message) # Возвращаем главное меню
     except Exception:
         bot.send_message(message.chat.id, f"⚠️ Ошибка: файл {filename} не найден.")
 
-# --- ОСТАЛЬНЫЕ КНОПКИ ---
+# --- ИНСТРУКЦИЯ (Кнопка) ---
 @bot.message_handler(func=lambda message: message.text == "📖 Инструкция")
-def instruction(message):
-    bot.send_message(message.chat.id, "📖 **Инструкция:**\n1. Скачай файл.\n2. Переименуй `.txt` в `.cfg` или `.apk`.\n3. Закинь в игру или установи.", parse_mode='Markdown')
+def instruction_menu(message):
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton("📄 Как установить CFG", callback_data="inst_cfg"))
+    markup.add(telebot.types.InlineKeyboardButton("🔓 Как ставить Temp Root", callback_data="inst_root"))
+    bot.send_message(message.chat.id, "Выбери инструкцию:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == "🛡️ Проверка пароля")
+@bot.callback_query_handler(func=lambda call: call.data.startswith('inst_'))
+def show_instruction(call):
+    if call.data == "inst_cfg":
+        text = "📄 **Установка CFG:**\n1. Скачай файл.\n2. Переименуй .txt в .cfg.\n3. Закинь в папку с игрой.\n4. Запусти игру."
+    elif call.data == "inst_root":
+        text = "🔓 **Установка Temp Root:**\n1. Скачай оба файла.\n2. Переименуй .txt в .apk.\n3. Установи KernelSU.\n4. Запусти dirtyfrag."
+    bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
+    bot.answer_callback_query(call.id)
+
+# --- ОСТАЛЬНЫЕ КНОПКИ ---
+@bot.message_handler(func=lambda message: message.text == "🛡️ Утечки")
 def ask_pass(message):
     bot.send_message(message.chat.id, "Отправь пароль (ответом на это сообщение), и я проверю, был ли он слит.")
 
-@bot.message_handler(func=lambda message: message.text == "🎮 Поиск в играх")
+@bot.message_handler(func=lambda message: message.text == "🎮 Игры")
 def ask_nick(message):
     bot.send_message(message.chat.id, "Отправь ник. Я дам ссылки на статистику.")
 
-@bot.message_handler(func=lambda message: message.text == "📹 Скачать видео")
+@bot.message_handler(func=lambda message: message.text == "📹 Видео")
 def ask_video(message):
     bot.send_message(message.chat.id, "Кинь ссылку на TikTok или YouTube.")
 
@@ -104,11 +115,11 @@ def ask_video(message):
 def ask_random(message):
     bot.send_message(message.chat.id, "Напиши два числа через пробел (например: 1 100).")
 
-@bot.message_handler(func=lambda message: message.text == "🌐 IP Инфо")
+@bot.message_handler(func=lambda message: message.text == "🌐 IP")
 def ask_ip(message):
     bot.send_message(message.chat.id, "Отправь IP-адрес (например, 8.8.8.8).")
 
-@bot.message_handler(func=lambda message: message.text == "🔑 Пароль")
+@bot.message_handler(func=lambda message: message.text == "🔑 Генератор")
 def generate_pass(message):
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
     password = ''.join(random.choice(chars) for _ in range(12))
@@ -129,7 +140,7 @@ def support(message):
 def donate(message):
     bot.send_message(message.chat.id, "Поддержать автора: https://www.donationalerts.com/r/твой_ник")
 
-@bot.message_handler(func=lambda message: message.text == "🛡️ CVE Поиск")
+@bot.message_handler(func=lambda message: message.text == "🛡️ CVE")
 def ask_cve(message):
     bot.send_message(message.chat.id, "Отправь название программы (например: Windows, Chrome), и я найду уязвимости.")
 
@@ -142,7 +153,7 @@ def back(message):
 def handle_text(message):
     text = message.text.strip()
     
-    if text in ["📁 CFG", "🔍 Пробив", "🎮 Поиск в играх", "🎲 Рандом", "🌐 IP Инфо", "🔑 Пароль", "🛡️ Проверка пароля", "📖 Инструкция", "📹 Скачать видео", "🛡️ CVE Поиск", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "💎 Донат", "Legit", "Rage", "Назад"]:
+    if text in ["📁 CFG", "🔍 Пробив", "🎮 Игры", "🎲 Рандом", "🌐 IP", "🔑 Генератор", "🛡️ Утечки", "📖 Инструкция", "📹 Видео", "🛡️ CVE", "🔓 Temp Root", "📢 Канал", "🆘 Поддержка", "💎 Донат", "Legit", "Rage", "Назад"]:
         return
 
     if text.replace(" ", "").isdigit() and " " in text:
@@ -215,12 +226,6 @@ def handle_text(message):
         bot.reply_to(message, res, parse_mode='Markdown', disable_web_page_preview=True)
     except:
         bot.reply_to(message, "⚠️ Введи номер (+7...), IP или @username.")
-
-if __name__ == "__main__":
-    keep_alive()
-    print("Бот запущен...")
-    bot.polling()rint("Бот запущен...")
-    bot.polling()ли @username.")
 
 if __name__ == "__main__":
     keep_alive()
