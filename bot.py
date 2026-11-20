@@ -4,7 +4,6 @@ from phonenumbers import carrier, geocoder
 from flask import Flask
 from threading import Thread
 import requests
-from bs4 import BeautifulSoup
 import re
 
 app = Flask('')
@@ -13,29 +12,29 @@ def home(): return "Бот жив!"
 def run(): app.run(host='0.0.0.0', port=8080)
 def keep_alive(): Thread(target=run).start()
 
-TOKEN = '9089789177:AAGtEvRBco6EpE0MkGEVDhO1ZXECzhxkoyU'
+# Твой НОВЫЙ токен
+TOKEN = '9158579329:AAFeT1iNKmaVXcuW63BoaMfJK5CZ8C0Wsr4'
 bot = telebot.TeleBot(TOKEN)
 
-# Функция для поиска в Google (вытаскиваем имена из открытых источников)
 def search_google(phone):
     try:
         clean = phone.replace("+", "").replace(" ", "").replace("-", "")
         if clean.startswith("8"): clean = "7" + clean[1:]
         url = f"https://www.google.com/search?q=%22{clean}%22"
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         r = requests.get(url, headers=headers, timeout=5)
         
         # Ищем имена (кириллица, 2-3 слова)
         names = re.findall(r'[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2}', r.text)
         if names:
-            return list(set(names))[:3] # Возвращаем до 3 уникальных имен
+            return list(set(names))[:3]
     except:
         pass
     return []
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "Скинь номер, и я поищу ФИО в открытых базах и на сайтах.")
+    bot.send_message(message.chat.id, "Скинь номер, и я поищу ФИО в открытых источниках.")
 
 @bot.message_handler(func=lambda message: True)
 def lookup(message):
@@ -57,7 +56,7 @@ def lookup(message):
         result = f"📱 {text} | {operator} | {region}\n"
         
         if found_names:
-            result += f"👤 **Найденные имена (Google):**\n"
+            result += f"👤 **Найденные имена:**\n"
             for name in found_names:
                 result += f"• {name}\n"
         else:
