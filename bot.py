@@ -32,32 +32,35 @@ def start(message):
 @bot.message_handler(func=lambda message: message.text == "📁 Получить CFG")
 def cfg_menu(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    # Кнопки для выбора кфг
-    btn_legit = telebot.types.InlineKeyboardButton("🥷 Free Legit CFG", callback_data="get_legit")
+    btn_legit = telebot.types.InlineKeyboardButton("🥷 Legit CFG", callback_data="get_legit")
     btn_rage = telebot.types.InlineKeyboardButton("🔥 Rage CFG", callback_data="get_rage")
     markup.add(btn_legit, btn_rage)
     
     bot.send_message(message.chat.id, "Выбери нужный конфиг:", reply_markup=markup)
 
-# --- ОТПРАВКА ВЫБРАННОГО ФАЙЛА ---
+# --- ОТПРАВКА ФАЙЛА С ИНСТРУКЦИЕЙ ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith('get_'))
 def send_file(call):
+    # Текст инструкции, который будет под файлом
+    instruction = "⚠️ **Внимание!**\nПеред установкой кфг обязательно переименуйте файл из **.txt** на **.cfg**"
+    
     if call.data == "get_legit":
-        filename = "free_legit.txt" # Имя файла на GitHub
-        caption = "Твой Free Legit CFG. Приятной игры!"
+        filename = "legit.txt" 
+        caption = f"Твой Legit CFG.\n\n{instruction}"
     elif call.data == "get_rage":
-        filename = "rage.txt" # Имя файла на GitHub
-        caption = "Твой Rage CFG. Будь осторожен!"
+        filename = "rage.txt" 
+        caption = f"Твой Rage CFG.\n\n{instruction}"
     else:
         return
 
     try:
         with open(filename, 'rb') as f:
-            bot.send_document(call.message.chat.id, f, caption=caption)
+            # Отправляем файл с текстом инструкции
+            bot.send_document(call.message.chat.id, f, caption=caption, parse_mode='Markdown')
             bot.answer_callback_query(call.id, "Файл отправлен!")
     except Exception as e:
         bot.answer_callback_query(call.id, "Ошибка: файл не найден.")
-        bot.send_message(call.message.chat.id, f"⚠️ Ошибка: убедись, что файл {filename} загружен на GitHub.")
+        bot.send_message(call.message.chat.id, f"⚠️ Ошибка: убедись, что файл {filename} загружен на GitHub и назван верно.")
 
 # --- ПРОБИВ ---
 @bot.message_handler(func=lambda message: message.text == "🔍 Пробив")
@@ -68,7 +71,6 @@ def ask_phone(message):
 def lookup(message):
     text = message.text.strip()
     
-    # Игнорируем нажатия кнопок
     if text in ["📁 Получить CFG", "🔍 Пробив"]:
         return
 
